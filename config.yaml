@@ -17,7 +17,7 @@ workflows:
           modelPath: /artifacts
           modelType: Tensorflow
           name: gradientci-sample
-          clusterId: clg07azjl
+          clusterId: clbdo1h0q
         checks: #[optional]
           tensorflow:loss:
             target: "0.0..0.5"
