@@ -19,9 +19,11 @@ def sigmoid(x):
 def get_state(data, t, n_days):
     """Returns an n-day state representation ending at time t
     """
-    d = t - n_days + 1
-    block = data[d: t + 1] if d >= 0 else -d * [data[0]] + data[0: t + 1]  # pad with t0
-    res = []
-    for i in range(n_days - 1):
-        res.append(sigmoid(block[i + 1] - block[i]))
-    return np.array([res])
+    #data = list(data["close"])
+    block = data.iloc[t: t + n_days, :]   # pad with t0
+    res = [0.5]
+    for i in range(n_days-1):
+        res.append(sigmoid(block["close"][i + 1] - block["close"][i]))
+    block = block.to_numpy()
+    block[:, 0] = res
+    return block

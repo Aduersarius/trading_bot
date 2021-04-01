@@ -37,49 +37,51 @@ from trading_bot.utils import (
     show_train_result,
     switch_k_backend_device
 )
+from data import get_data
 
 
 def main(train_stock, val_stock, window_size, batch_size, ep_count,
-         strategy="t-dqn", model_name="model_debug", pretrained=False,
-         debug=False):
+         strategy="double-dqn", model_name="model_first", pretrained=False,
+         debug=True):
     """ Trains the stock trading bot using Deep Q-Learning.
     Please see https://arxiv.org/abs/1312.5602 for more details.
 
     Args: [python train.py --help]
     """
-    agent = Agent(window_size, strategy=strategy, pretrained=pretrained, model_name=model_name)
-    
-    train_data = get_stock_data(train_stock)
-    val_data = get_stock_data(val_stock)
+
+    train_data, _ = get_data(ticker="AAPL", feed_window=390, prediction_window=0, size=ep_count)
+    val_data, _ = get_data(ticker="AAPL", feed_window=390, prediction_window=0, size=ep_count)
+    agent = Agent(window_size, strategy=strategy, pretrained=pretrained, model_name=model_name,
+                  n_feachs=len(train_data[0].iloc[0, :]))
+    # train_data = get_stock_data(train_stock)
+    # val_data = get_stock_data(val_stock)
 
     initial_offset = val_data[1] - val_data[0]
 
     for episode in range(1, ep_count + 1):
-        train_result = train_model(agent, episode, train_data, ep_count=ep_count,
+        train_result = train_model(agent, episode, train_data[episode-1], ep_count=ep_count,
                                    batch_size=batch_size, window_size=window_size)
-        val_result, _ = evaluate_model(agent, val_data, window_size, debug)
+        val_result, _ = evaluate_model(agent, val_data[episode-1], window_size, debug)
         show_train_result(train_result, val_result, initial_offset)
 
 
 if __name__ == "__main__":
-    args = docopt(__doc__)
-
-    train_stock = args["<train-stock>"]
-    val_stock = args["<val-stock>"]
-    strategy = args["--strategy"]
-    window_size = int(args["--window-size"])
-    batch_size = int(args["--batch-size"])
-    ep_count = int(args["--episode-count"])
-    model_name = args["--model-name"]
-    pretrained = args["--pretrained"]
-    debug = args["--debug"]
+    # args = docopt(__doc__)
+    #
+    # train_stock = args["AAPL"]
+    # val_stock = args["AAPL"]
+    # strategy = args["--strategy"]
+    # window_size = int(args["--window-size"])
+    # batch_size = int(args["--batch-size"])
+    # ep_count = int(args["--episode-count"])
+    # model_name = args["--model-name"]
+    # pretrained = args["--pretrained"]
+    # debug = args["--debug"]
 
     coloredlogs.install(level="DEBUG")
     switch_k_backend_device()
 
     try:
-        main(train_stock, val_stock, window_size, batch_size,
-             ep_count, strategy=strategy, model_name=model_name, 
-             pretrained=pretrained, debug=debug)
+        main(train_stock="AAPL", val_stock="AAPL", window_size=50, batch_size=32, ep_count=10)
     except KeyboardInterrupt:
         print("Aborted!")
